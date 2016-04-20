@@ -8,8 +8,8 @@ vector<vector<bool> > createMatrix(int m, int n);
 int main()
 {
     //give size of matrix
-    int m=5;
-    int n=5;
+    int m=10;
+    int n=10;
 
     //create matrix m x n of 0's
    vector<vector<bool> > fields = createMatrix(m,n);
@@ -27,7 +27,7 @@ int main()
 
 
     //displays modified matrix for visual purposes
-    showMatrix(fields);
+    //showMatrix(fields);       //<--- uncomment for visual representation of matrix
 
     //counts the fields that are True
     cout << solve(fields)<< endl;
@@ -60,7 +60,10 @@ void showMatrix(vector<vector<bool> > fields)
         cout<<"[";
         for(int j=0;j<n;j++)
         {
-            cout<<fields[i][j]<<",";
+            if(j!=n-1)
+                cout<<fields[i][j]<<",";
+            else
+                cout<<fields[i][j];
         }
         cout<<"]"<<endl;
     }
