@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.ResourceBundle;
@@ -282,8 +283,9 @@ public class FXMLDocumentController implements Initializable {
         hourlyWageList.add(hourly_wage_field_C);
         // bind 1st wage field to listener must do for the rest of 2 fields
         hourly_wage_field_A.textProperty().addListener((observable, oldValue, newValue)->{hourlyWageChange(newValue);});
-        
+
         addListenersToDays();
+        
         System.out.println("Hey guys");
     }
     
@@ -291,44 +293,97 @@ public class FXMLDocumentController implements Initializable {
 //            It is responsible for clearing all data stored in the textfields of all days.
     public void clearAllDaysInfo() {
         //go through all days, then all textfield and then clear them
-                Day day;
-        //From: Group, Get: all VBox for each day
-        for(Node day_col: days_group.getChildren()){
+        List<TextField> clearWorkTimes = getAllDaysTextFieldOf("work times");
+        for(TextField dayTextField : clearWorkTimes){
+            System.out.printf("Start and end time for %s\n",dayTextField.getId());
+            dayTextField.setText("");
+        }
+        
+        List<TextField> clearBreakTimes = getAllDaysTextFieldOf("break times");
+        for(TextField dayTextField : clearBreakTimes){
+            System.out.printf("Clearing break time for %s\n",dayTextField.getId());
+            dayTextField.setText("");
+        }
+    }
+            
+      
+//    Function: This function will get all the textfield elements as required in by a list.
+//              If start and end time is wanted, it will provide an array of start and end time for all days.
+//              If break time is wanted, it will provide break time for all days.
+//              If earned is wanted, it will provide earned textfield for all days.
+//    Input: "work time", "break time" or "earned"
+    public List<TextField> getAllDaysTextFieldOf(String fieldOf) {
+        List<TextField> retList = new ArrayList<TextField>();
+        if(!fieldOf.equals("work times") && !fieldOf.equals("break times") && !fieldOf.equals("earned")) {
+            System.out.println("Bad input request. Use either work times to get start and end times, \n or break times or earned");
+            return null;
+        }
+        
+       Day day;
+       //From: Group, Get: all VBox for each day
+       for(Node day_col: days_group.getChildren()){
              day = getDayObject(((VBox)day_col).getId().substring(5));
             //get all children nodes for each day. aka get vertical column of each day
             //From: VBox, Get: all HBox and textfield for each day
+            
             for(Node n : ((VBox)day_col).getChildren()){
                 //for start and end time only
-                if( n instanceof HBox){
+                if(fieldOf.equals("work times") && n instanceof HBox){
                     for(Node ni: ((HBox)n).getChildren()){
                         if(ni instanceof TextField){
-                           TextField dayTextField = (TextField)ni;
-                           System.out.printf("Start and end time for %s\n",dayTextField.getId());
-                           dayTextField.setText("");
+                           retList.add((TextField)ni);
                         }
                     }
                 }else if(n instanceof TextField){
                     //for rest of the textfield in that column
                     TextField dayTextField = (TextField)n;
                     String id = dayTextField.getId();
-                    //for break text fields
-                    if(id.contains("break")){
-                        System.out.printf("Clearing break time for %s\n",dayTextField.getId());
-                        dayTextField.setText("");
+                    if(fieldOf.equals("earned") && id.contains("earned")){
+                        retList.add(dayTextField);
+                    }else if(fieldOf.equals("break times") && id.contains("break")){    
+                        retList.add(dayTextField);
                     }
-                        
                 }
             }
-        }
-        
+       }
+       return retList;
     }
     
+
+    
+
     
 //    does what it says
     public void addListenersToDays() {
         Day day;
-        //From: Group, Get: all VBox for each day
-        for(Node day_col: days_group.getChildren()){
+        
+        // add listeners on start and end time for all days
+        List<TextField> workTimes = getAllDaysTextFieldOf("work times");
+        for(int i=0;i<workTimes.size();i++){
+            TextField dayTextField = (TextField)workTimes.get(i);
+            dayTextField.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange(dayTextField.getId(),newValue);});
+        }
+        
+        // add listeners on break time for all days
+        List<TextField> breakTimes = getAllDaysTextFieldOf("break times");
+        for(int i=0;i<breakTimes.size();i++){
+            TextField dayTextField = (TextField)breakTimes.get(i);
+            String id = dayTextField.getId();
+            dayTextField.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange(id,newValue);});
+        }
+        
+        // add listeners on earned for all days
+        List<TextField> earned = getAllDaysTextFieldOf("earned");
+        for(int i=0;i<earned.size();i++){
+            TextField dayTextField = (TextField)earned.get(i);
+            String id = dayTextField.getId();
+//            System.out.println(id.substring(0, 3));
+            day = getDayObject(id.substring(0, 3));
+            dayTextField.textProperty().bind(Bindings.format(locale, "%.2f", day.amountEarnedProperty()));
+        }
+//        
+       // add listeners on radio buttons for all days
+       for(Node day_col: days_group.getChildren()){
              day = getDayObject(((VBox)day_col).getId().substring(5));
             //get all children nodes for each day. aka get vertical column of each day
             //From: VBox, Get: all HBox and textfield for each day
@@ -336,10 +391,7 @@ public class FXMLDocumentController implements Initializable {
                 //for start and end time only
                 if( n instanceof HBox){
                     for(Node ni: ((HBox)n).getChildren()){
-                        if(ni instanceof TextField){
-                           TextField dayTextField = (TextField)ni;
-                            dayTextField.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange(dayTextField.getId(),newValue);});
-                        }else if(ni instanceof VBox){    //for a day, when we find Vbox of radio buttons
+                        if(ni instanceof VBox){    //for a day, when we find Vbox of radio buttons
                             for(Node nii : ((VBox)ni).getChildren()){
                                 if(nii instanceof RadioButton){    //for a day, when we find radio button
                                     RadioButton rb = (RadioButton)nii;
@@ -349,87 +401,9 @@ public class FXMLDocumentController implements Initializable {
                             }
                         }
                     }
-                }else if(n instanceof TextField){
-                    //for rest of the textfield in that column
-                    TextField dayTextField = (TextField)n;
-                    String id = dayTextField.getId();
-                    if(id.contains("earned"))
-                        dayTextField.textProperty().bind(Bindings.format(locale, "%.2f", day.amountEarnedProperty()));
-                    else
-                        dayTextField.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange(id,newValue);});
                 }
             }
-        }
+       }
     }
-    
-    //monday listeners
-//    public void initMonday(){
-//        mon_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("mon_start_hr",newValue);});
-//        mon_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("mon_start_min",newValue);});
-//        mon_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("mon_end_hr",newValue);});
-//        mon_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("mon_end_min",newValue);});
-//        mon_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("mon_break",newValue);});
-//        mon_earned.textProperty().bind(Bindings.format(locale, "%.2f", monday.amountEarnedProperty()));
-//    }
-//    
-//    //tuesday listeners
-//    public void initTuesday(){
-//        tue_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("tue_start_hr",newValue);});
-//        tue_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("tue_start_min",newValue);});
-//        tue_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("tue_end_hr",newValue);});
-//        tue_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("tue_end_min",newValue);});
-//        tue_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("tue_break",newValue);});
-//        tue_earned.textProperty().bind(Bindings.format(locale, "%.2f", tuesday.amountEarnedProperty()));
-//    }
-//    
-//    //wednesday listeners
-//    public void initWednesday(){
-//        wed_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("wed_start_hr",newValue);});
-//        wed_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("wed_start_min",newValue);});
-//        wed_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("wed_end_hr",newValue);});
-//        wed_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("wed_end_min",newValue);});
-//        wed_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("wed_break",newValue);});
-//        wed_earned.textProperty().bind(Bindings.format(locale, "%.2f", wednesday.amountEarnedProperty()));
-//    }
-//    
-//    //thursday listeners
-//    public void initThursday(){
-//        thu_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("thu_start_hr",newValue);});
-//        thu_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("thu_start_min",newValue);});
-//        thu_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("thu_end_hr",newValue);});
-//        thu_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("thu_end_min",newValue);});
-//        thu_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("thu_break",newValue);});
-//        thu_earned.textProperty().bind(Bindings.format(locale, "%.2f", thursday.amountEarnedProperty()));
-//    }
-//    
-//    //friday listeners
-//    public void initFriday(){
-//        fri_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("fri_start_hr",newValue);});
-//        fri_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("fri_start_min",newValue);});
-//        fri_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("fri_end_hr",newValue);});
-//        fri_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("fri_end_min",newValue);});
-//        fri_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("fri_break",newValue);});
-//        fri_earned.textProperty().bind(Bindings.format(locale, "%.2f", friday.amountEarnedProperty()));
-//    }
-//    
-//    //saturday listeners
-//    public void initSaturday(){
-//        sat_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sat_start_hr",newValue);});
-//        sat_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sat_start_min",newValue);});
-//        sat_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sat_end_hr",newValue);});
-//        sat_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sat_end_min",newValue);});
-//        sat_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sat_break",newValue);});
-//        sat_earned.textProperty().bind(Bindings.format(locale, "%.2f", saturday.amountEarnedProperty()));
-//    }
-//    
-//    //sunday listeners
-//    public void initSunday(){
-//        sun_start_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sun_start_hr",newValue);});
-//        sun_start_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sun_start_min",newValue);});
-//        sun_end_hr.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sun_end_hr",newValue);});
-//        sun_end_min.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sun_end_min",newValue);});
-//        sun_break.textProperty().addListener((observable, oldValue, newValue)->{dayTimeChange("sun_break",newValue);});
-//        sun_earned.textProperty().bind(Bindings.format(locale, "%.2f", sunday.amountEarnedProperty()));
-//    }
 }
 
