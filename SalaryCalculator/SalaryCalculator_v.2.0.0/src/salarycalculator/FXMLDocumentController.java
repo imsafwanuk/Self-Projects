@@ -60,6 +60,7 @@ public class FXMLDocumentController implements Initializable {
     Day sunday = new Day("sunday");
     Day[] daylist = {monday, tuesday, wednesday, thursday, friday, saturday, sunday};
     
+    
     @FXML
     TextField hourly_wage_field_A, hourly_wage_field_B, hourly_wage_field_C;
     ArrayList<TextField> hourlyWageList = new ArrayList<TextField>();
@@ -285,6 +286,43 @@ public class FXMLDocumentController implements Initializable {
         addListenersToDays();
         System.out.println("Hey guys");
     }
+    
+//  Function: This function gets called when the clear all day button is clicked.
+//            It is responsible for clearing all data stored in the textfields of all days.
+    public void clearAllDaysInfo() {
+        //go through all days, then all textfield and then clear them
+                Day day;
+        //From: Group, Get: all VBox for each day
+        for(Node day_col: days_group.getChildren()){
+             day = getDayObject(((VBox)day_col).getId().substring(5));
+            //get all children nodes for each day. aka get vertical column of each day
+            //From: VBox, Get: all HBox and textfield for each day
+            for(Node n : ((VBox)day_col).getChildren()){
+                //for start and end time only
+                if( n instanceof HBox){
+                    for(Node ni: ((HBox)n).getChildren()){
+                        if(ni instanceof TextField){
+                           TextField dayTextField = (TextField)ni;
+                           System.out.printf("Start and end time for %s\n",dayTextField.getId());
+                           dayTextField.setText("");
+                        }
+                    }
+                }else if(n instanceof TextField){
+                    //for rest of the textfield in that column
+                    TextField dayTextField = (TextField)n;
+                    String id = dayTextField.getId();
+                    //for break text fields
+                    if(id.contains("break")){
+                        System.out.printf("Clearing break time for %s\n",dayTextField.getId());
+                        dayTextField.setText("");
+                    }
+                        
+                }
+            }
+        }
+        
+    }
+    
     
 //    does what it says
     public void addListenersToDays() {
