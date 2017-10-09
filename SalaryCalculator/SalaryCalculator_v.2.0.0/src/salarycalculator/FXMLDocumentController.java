@@ -32,6 +32,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -274,7 +276,69 @@ public class FXMLDocumentController implements Initializable {
        calculateAmountEarned(getDayObject(event.getSource().toString().substring(31, 34)));
        System.out.println(event);
     }
-      
+    
+    //    Function: When CRTL+keyorad number = DIGIT1,DIGIT2 are pressed, focus will go to 
+//              corresponding days. mon = 1, tue = 2, wed = 3... 
+//    Input: Appropriate KeyPress
+    
+    public void tabDayChange(KeyEvent event){
+//        System.out.println(event.getCode().toString());
+        String keypress = event.getCode().toString();
+   
+        switch(keypress){
+            
+            // for mon
+            case "NUMPAD1":
+            case "DIGIT1":
+                mon_start_hr.requestFocus();
+                break;
+                
+                // for tue 
+            case "NUMPAD2":
+            case "DIGIT2":
+                tue_start_hr.requestFocus();
+                break;
+                
+                // for wed
+            case "NUMPAD3":
+            case "DIGIT3":
+                wed_start_hr.requestFocus();
+                break;
+                
+                // for thur
+            case "NUMPAD4":
+            case "DIGIT4":
+                thu_start_hr.requestFocus();
+                break;
+                
+                // for fri
+            case "NUMPAD5":
+            case "DIGIT5":
+                fri_start_hr.requestFocus();
+                break;
+                
+                // for sat
+            case "NUMPAD6":
+            case "DIGIT6":
+                sat_start_hr.requestFocus();
+                break;
+                
+                // for sun
+            case "NUMPAD7":
+            case "DIGIT7":
+                sun_start_hr.requestFocus();
+                break;
+                
+            default:
+                System.out.println("Invalid key press "+keypress);
+        }
+    }
+    
+   
+    
+    
+
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         //inserting 3 diff wage textfield in 1 arraylist for easy access
@@ -348,9 +412,6 @@ public class FXMLDocumentController implements Initializable {
        }
        return retList;
     }
-    
-
-    
 
     
 //    does what it says
